@@ -1,0 +1,2 @@
+
+from interfaceToWord import application
