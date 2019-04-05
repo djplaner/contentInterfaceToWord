@@ -15,13 +15,40 @@ from doc import html
 
 def handleTable( table, doc ):
 
-    table_body = table.find('tbody')
+#    table_body = table.find('tbody')
 
-    docTable = doc.add_table()
+    #-- need to parse the table structure in HTML and identify
+    #   the number of rows and num of columns for each row
+    numRows = 0
+    numCols = []
 
-    rows = table_body.find_all('tr')
+
+    rows = table.find_all('tr')
+    numRows = len(rows)
     for row in rows:
         cols = row.find_all('td')
+        numCols.append( len(cols) )
+
+    print("===============================================")
+    print("Table with numRows %s and cols %s" % (numRows,numCols))
+    print("===============================================")
+
+    #-- now create the table in Word
+    table = doc.add_table( numRows, max(numCols) )
+    rowCount=0
+    for row in rows:
+        # TODO need to handle case where rows are merged
+        #-- get all the columns
+        cols = row.find_all('td')
+        colCount=0
+        for col in cols:
+            # TODO need to test to see if columns have been merged
+            cell = table.cell( rowCount, colCount )
+            print("XXXXXXXXXXXXXX col is type %s value %s"%(type(col),col))
+            print("   contents %s" % col.decode_contents())
+            cell.text = col.decode_contents()  # TODO actually want to parse this
+            colCount+=1
+        rowCount+=1
 
 #---------------------------------------------------------------
 # Given an element from BeautifulSoup identify which type of
@@ -80,44 +107,17 @@ def processElement( elem, doc ):
             print( "ERROR can't handle %s" % tag )
             print( repr(elem))
 
-soup = BeautifulSoup( html, 'html.parser')
+def main():
+    soup = BeautifulSoup( html, 'html.parser')
 
-#print( soup.prettify() )
+    doc = Document()
 
-doc = Document()
+    for elem in soup.children: #soup.next_siblings:
+        elemType = processElement(elem,doc)
 
-for elem in soup.children: #soup.next_siblings:
-#    print("---------------------------------")
-#    print( repr(elem) )
-#    print(type(elem))
-
-    elemType = processElement(elem,doc)
-#    print("xxxxxxxxxxxxxxxxxxxx-------------")
+    doc.save("word.docx")
 
 
-doc.save("word.docx")
-
-#---- justext version
-#paragraphs = justext.justext( html, justext.get_stoplist("English"))
-
-#for p in paragraphs:
-#    print(p.text)
-
-#    doc = Document()
-
-#    doc.add_paragraph( html ) 
-#    ty = type(paragraphs)
-#    doc.add_paragraph( ty )
-
-#    doc.add_paragraph( paragraphs[2] )
-
-#    for p in paragraphs: 
-#        doc.add_paragraph( p)
-#        print("paragraph is %s" % paragraph )
-#        output+="************************* %s" %count
-#        count+=1
-#        output+=paragraph.text
-
-#    p = doc.add_paragraph( "Hello world from Word land")
-
+if __name__ == "__main__":
+    main()
 
